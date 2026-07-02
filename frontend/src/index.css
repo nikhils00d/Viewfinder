@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --font-playfair: 'Playfair Display', serif;
+  --font-dm: 'DM Mono', monospace;
+  --font-inter: 'Inter', sans-serif;
+}
+
+@keyframes redPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.1; }
+}
+
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+body { 
+  background: #0A0A0A; 
+}
+
+::-webkit-scrollbar { 
+  width: 0; 
+}
