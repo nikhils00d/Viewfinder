@@ -30,6 +30,7 @@ const mockEvents = [
 
 export default function EventsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAdmin, setIsAdmin] = useState(true); // Hardcoded true for demonstration right now
 
   const filteredEvents = mockEvents.filter(event => 
     event.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -54,16 +55,27 @@ export default function EventsPage() {
           Use the search bar to find a specific event and access its raw media files via Google Drive.
         </p>
 
-        {/* Search */}
-        <div className="mb-12 relative">
-          <input
-            type="text"
-            placeholder="Search by event name..."
-            className="w-full bg-transparent border-b border-white/20 pb-4 text-xl outline-none focus:border-white transition-colors placeholder:text-white/20"
-            style={{ fontFamily: '"DM Mono", monospace' }}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        {/* Search & Admin Controls */}
+        <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div className="relative w-full max-w-md">
+            <input
+              type="text"
+              placeholder="Search by event name..."
+              className="w-full bg-transparent border-b border-white/20 pb-4 text-xl outline-none focus:border-white transition-colors placeholder:text-white/20"
+              style={{ fontFamily: '"DM Mono", monospace' }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          {isAdmin && (
+            <button 
+              className="border border-[#E8202A] text-[#E8202A] px-6 py-3 text-sm uppercase tracking-widest hover:bg-[#E8202A]/10 transition-colors whitespace-nowrap"
+              style={{ fontFamily: '"DM Mono", monospace' }}
+            >
+              + Add Event
+            </button>
+          )}
         </div>
 
         {/* Event Grid */}
@@ -87,19 +99,32 @@ export default function EventsPage() {
                 {event.description}
               </p>
 
-              <a 
-                href={event.driveLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-3 text-sm tracking-widest uppercase hover:text-[#E8202A] transition-colors w-fit"
-                style={{ fontFamily: '"DM Mono", monospace' }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                </svg>
-                Access Drive
-              </a>
+              <div className="flex-grow flex flex-col justify-end">
+                <a 
+                  href={event.driveLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 text-sm tracking-widest uppercase hover:text-[#E8202A] transition-colors w-fit mb-2"
+                  style={{ fontFamily: '"DM Mono", monospace' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                  </svg>
+                  Access Drive
+                </a>
+
+                {isAdmin && (
+                  <div className="flex gap-6 mt-4 pt-4 border-t border-white/10">
+                    <button className="text-xs text-white/50 hover:text-white transition-colors uppercase tracking-widest" style={{ fontFamily: '"DM Mono", monospace' }}>
+                      Edit Event
+                    </button>
+                    <button className="text-xs text-[#E8202A]/70 hover:text-[#E8202A] transition-colors uppercase tracking-widest" style={{ fontFamily: '"DM Mono", monospace' }}>
+                      Delete Event
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
           
