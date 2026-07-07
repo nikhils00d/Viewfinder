@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import AuthModal from '../components/AuthModal';
-
-
 const ViewfinderBrackets = () => (
   <div className="absolute inset-0 pointer-events-none z-10">
     <svg className="absolute top-[10vw] left-[10vw]" width="41.5" height="41.5" viewBox="0 0 41.5 41.5" fill="none">
@@ -118,7 +115,6 @@ const RightHUD = () => (
 );
 
 export default function LandingPage() {
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [scrollData, setScrollData] = useState({
     blurPx: 20,
     overlayOpacity: 0.6,
@@ -182,24 +178,6 @@ export default function LandingPage() {
       {/* Hero section */}
       <div ref={heroRef} style={{ height: '130vh' }}>
         <div className="sticky top-0 h-[100vh] w-full overflow-hidden">
-          {/* Top Right Navigation */}
-          <div className="absolute top-8 right-12 z-20 flex gap-8 items-center">
-            <Link
-              to="/events"
-              className="uppercase text-[rgba(255,255,255,0.6)] hover:text-white transition-colors"
-              style={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.12em' }}
-            >
-              BROWSE ARCHIVES
-            </Link>
-            <button 
-              onClick={() => setIsAuthModalOpen(true)}
-              className="uppercase text-[rgba(255,255,255,0.6)] hover:text-white transition-colors"
-              style={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.12em' }}
-            >
-              LOGIN / JOIN
-            </button>
-          </div>
-
           {/* UI Elements */}
           <ViewfinderBrackets />
           <RedDot />
@@ -240,8 +218,6 @@ export default function LandingPage() {
           — next section —
         </div>
       </div>
-      
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
   );
 }
