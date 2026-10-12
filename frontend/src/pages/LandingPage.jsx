@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import PhotoCarousel from '../components/PhotoCarousel';
 const ViewfinderBrackets = () => (
   <div className="absolute inset-0 pointer-events-none z-10">
     <svg className="absolute top-[10vw] left-[10vw]" width="41.5" height="41.5" viewBox="0 0 41.5 41.5" fill="none">
@@ -120,6 +120,10 @@ export default function LandingPage() {
     overlayOpacity: 0.6,
     showFocusBar: false,
     focusProgress: 0,
+    heroOpacity: 1,
+    s2Opacity: 0,
+    s2TranslateY: 24,
+    bgScale: 1.06,
   });
 
   const heroRef = useRef(null);
@@ -129,7 +133,11 @@ export default function LandingPage() {
       const scrollY = window.scrollY;
       const vh = window.innerHeight;
 
-      // Focus phase: first 0.5vh of scrolling
+      const prefersReducedMotion =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Phase 1: Focus phase (first 0.20vh of scrolling)
       const focusDistance = 0.20 * vh;
       const focusProgress = Math.max(0, Math.min(1, scrollY / focusDistance));
 
@@ -137,15 +145,41 @@ export default function LandingPage() {
       const showFocusBar = focusProgress >= 0.8;
 
       let overlayOpacity = 0.6 - (0.3 * focusProgress); // 0.6 -> 0.3
+      let heroOpacity = 1;
 
-      // Darken phase: starts after focus finishes
+      // Phase 2: Darken & Hero dissolve (starts after focus finishes)
       if (scrollY > focusDistance) {
-        const darkenDistance = 1.0 * vh; // Over the next 1vh of scrolling
+        const darkenDistance = 0.85 * vh;
         const darkenProgress = Math.max(0, Math.min(1, (scrollY - focusDistance) / darkenDistance));
-        overlayOpacity = 0.3 + (0.6 * darkenProgress); // 0.3 -> 0.9 (much darker)
+        overlayOpacity = 0.3 + (0.56 * darkenProgress); // 0.3 -> 0.86
+
+        // Hero dissolves smoothly as user scrolls into the next chapter
+        const heroFadeStart = 0.35 * vh;
+        const heroFadeDist = 0.55 * vh;
+        const heroFadeProgress = Math.max(0, Math.min(1, (scrollY - heroFadeStart) / heroFadeDist));
+        heroOpacity = 1 - heroFadeProgress;
       }
 
-      setScrollData({ blurPx, overlayOpacity, showFocusBar, focusProgress });
+      // Phase 3: Section 2 entrance (smooth reveal as user scrolls past 0.7vh)
+      const s2Start = 0.70 * vh;
+      const s2Dist = 0.55 * vh;
+      const s2Progress = Math.max(0, Math.min(1, (scrollY - s2Start) / s2Dist));
+      const s2Opacity = s2Progress;
+      const s2TranslateY = prefersReducedMotion ? 0 : (1 - s2Progress) * 24;
+
+      // Background subtle slow zoom for cinematic depth (1.06 -> 1.11)
+      const bgScale = prefersReducedMotion ? 1.06 : 1.06 + Math.min(0.05, (scrollY / (2.5 * vh)) * 0.05);
+
+      setScrollData({
+        blurPx,
+        overlayOpacity,
+        showFocusBar,
+        focusProgress,
+        heroOpacity,
+        s2Opacity,
+        s2TranslateY,
+        bgScale,
+      });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -155,7 +189,7 @@ export default function LandingPage() {
 
   return (
     <div className="w-full text-white">
-      {/* Fixed Background for entire page */}
+      {/* Fixed Background for entire page — continuous across all sections */}
       <div className="fixed inset-0 -z-10">
         {/* Background Photo */}
         <div
@@ -165,10 +199,11 @@ export default function LandingPage() {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             filter: `blur(${scrollData.blurPx}px)`,
-            transform: 'scale(1.06)',
+            transform: `scale(${scrollData.bgScale})`,
+            transition: 'filter 0.1s ease-out, transform 0.15s ease-out',
           }}
         />
-        {/* Overlay */}
+        {/* Continuous cinematic overlay */}
         <div
           className="absolute inset-0"
           style={{ backgroundColor: `rgba(0,0,0,${scrollData.overlayOpacity})` }}
@@ -177,7 +212,13 @@ export default function LandingPage() {
 
       {/* Hero section */}
       <div ref={heroRef} style={{ height: '130vh' }}>
-        <div className="sticky top-0 h-[100vh] w-full overflow-hidden">
+        <div
+          className="sticky top-0 h-[100vh] w-full overflow-hidden"
+          style={{
+            opacity: scrollData.heroOpacity,
+            transition: 'opacity 0.2s ease-out',
+          }}
+        >
           {/* UI Elements */}
           <ViewfinderBrackets />
           <RedDot />
@@ -206,18 +247,63 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Below section */}
-      <div
-        className="h-[100vh] w-full flex items-center justify-center bg-transparent"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+      {/* Second Section — Confluenz (Spacious, Minimal, Centered with Referenced 3D Reel) */}
+      <section
+        id="confluenz"
+        className="relative z-10 w-full min-h-[120vh] flex flex-col items-center justify-center px-6 sm:px-12 md:px-20 text-center bg-transparent select-none py-28"
+        style={{
+          opacity: scrollData.s2Opacity,
+          transform: `translateY(${scrollData.s2TranslateY}px)`,
+          transition: 'opacity 0.2s ease-out, transform 0.2s ease-out',
+        }}
       >
-        <div
-          className="text-white opacity-25 uppercase"
-          style={{ fontFamily: '"DM Mono", monospace', fontSize: '14px', letterSpacing: '0.1em' }}
-        >
-          — next section —
+        <div className="max-w-4xl mx-auto flex flex-col items-center">
+          {/* Restrained Overline */}
+          <div
+            className="flex items-center gap-3 text-white/45 uppercase mb-6 sm:mb-8 font-mono text-[11px] tracking-[0.24em]"
+            style={{ fontFamily: '"DM Mono", monospace' }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-[#E8202A]"
+              style={{ animation: 'redPulse 1.5s ease-in-out infinite' }}
+            />
+            <span>Confluenz · Est. 2015 · ADGIPS</span>
+          </div>
+
+          {/* Majestic Centered Headline */}
+          <h2
+            className="italic text-white font-normal"
+            style={{
+              fontFamily: '"Playfair Display", serif',
+              fontSize: 'clamp(46px, 6.5vw, 84px)',
+              lineHeight: 1.1,
+              letterSpacing: '0.02em',
+            }}
+          >
+            Every Frame Tells a Story.
+          </h2>
+
+          {/* Generous Negative Space & Refined Narrative */}
+          <p
+            className="mt-6 sm:mt-8 text-white/70 max-w-2xl sm:max-w-3xl mx-auto font-light"
+            style={{
+              fontFamily: '"Inter", sans-serif',
+              fontSize: 'clamp(15px, 1.35vw, 18px)',
+              lineHeight: 1.8,
+              letterSpacing: '0.015em',
+            }}
+          >
+            Established in 2015, Confluenz is the official photography and filmmaking society of ADGIPS.
+            From capturing campus milestones and candid moments to films that tell stories worth remembering,
+            we preserve the experiences that define our college community.
+          </p>
         </div>
-      </div>
+
+        {/* The Referenced 3D Draggable Photo Carousel */}
+        <div className="w-full max-w-6xl mx-auto mt-10 sm:mt-14">
+          <PhotoCarousel />
+        </div>
+      </section>
     </div>
   );
 }
