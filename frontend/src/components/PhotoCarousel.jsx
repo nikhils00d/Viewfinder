@@ -1,9 +1,9 @@
-import React, { memo, useState, useEffect, useLayoutEffect } from 'react';
+import React, { memo, useState, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   AnimatePresence,
   motion,
-  useAnimation,
   useMotionValue,
+  useSpring,
   useTransform,
 } from 'framer-motion';
 
@@ -68,7 +68,7 @@ const DEFAULT_CARDS = [
   },
 ];
 
-const Carousel = memo(({ handleClick, controls, cards, isCarouselActive }) => {
+const Carousel = memo(({ handleClick, cards, smoothRotation, smoothHoverLean }) => {
   const isSm = useMediaQuery('(max-width: 640px)', { defaultValue: false });
   const isMd = useMediaQuery('(max-width: 1024px)', { defaultValue: false });
 
@@ -76,8 +76,12 @@ const Carousel = memo(({ handleClick, controls, cards, isCarouselActive }) => {
   const faceCount = cards.length;
   const faceWidth = cylinderWidth / faceCount;
   const radius = cylinderWidth / (2 * Math.PI);
-  const rotation = useMotionValue(0);
-  const transform = useTransform(rotation, (val) => `rotate3d(0, 1, 0, ${val}deg)`);
+
+  const combinedRotation = useTransform(
+    [smoothRotation, smoothHoverLean],
+    ([rot, lean]) => rot + lean
+  );
+  const transform = useTransform(combinedRotation, (val) => `rotate3d(0, 1, 0, ${val}deg)`);
 
   return (
     <div
@@ -89,35 +93,12 @@ const Carousel = memo(({ handleClick, controls, cards, isCarouselActive }) => {
       }}
     >
       <motion.div
-        drag={isCarouselActive ? 'x' : false}
-        dragConstraints={{ left: -10000, right: 10000 }}
-        dragElastic={0}
-        className="relative flex h-full origin-center cursor-grab items-center justify-center active:cursor-grabbing"
+        className="relative flex h-full origin-center cursor-default items-center justify-center"
         style={{
           transform,
-          rotateY: rotation,
           width: cylinderWidth,
           transformStyle: 'preserve-3d',
         }}
-        onDrag={(_, info) => {
-          if (isCarouselActive) {
-            rotation.set(rotation.get() + info.delta.x * 0.28);
-          }
-        }}
-        onDragEnd={(_, info) => {
-          if (isCarouselActive) {
-            controls.start({
-              rotateY: rotation.get() + info.velocity.x * 0.08,
-              transition: {
-                type: 'spring',
-                stiffness: 85,
-                damping: 26,
-                mass: 0.15,
-              },
-            });
-          }
-        }}
-        animate={controls}
       >
         {cards.map((card, i) => {
           const angle = i * (360 / faceCount);
@@ -133,7 +114,7 @@ const Carousel = memo(({ handleClick, controls, cards, isCarouselActive }) => {
               onClick={() => handleClick(card, i)}
             >
               <div
-                className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-neutral-900 border border-white/10 shadow-[0_15px_35px_rgba(0,0,0,0.65)] transition-all duration-300 group-hover:border-white/40 group-hover:shadow-[0_20px_45px_rgba(232,32,42,0.25)]"
+                className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-neutral-900 border border-white/10 shadow-[0_15px_35px_rgba(0,0,0,0.65)] transition-all duration-300 group-hover:border-white/50 group-hover:shadow-[0_20px_45px_rgba(232,32,42,0.3)] group-hover:scale-[1.04]"
               >
                 <img
                   src={card.url}
@@ -169,18 +150,67 @@ const Carousel = memo(({ handleClick, controls, cards, isCarouselActive }) => {
 
 export default function PhotoCarousel({ cards = DEFAULT_CARDS }) {
   const [activeCard, setActiveCard] = useState(null);
-  const [isCarouselActive, setIsCarouselActive] = useState(true);
-  const controls = useAnimation();
+  const stageRef = useRef(null);
+
+  // Motion values for smooth mouse-wheel rotation & hover perspective lean
+  const rawRotation = useMotionValue(0);
+  const smoothRotation = useSpring(rawRotation, {
+    stiffness: 125,
+    damping: 24,
+    mass: 0.18,
+  });
+
+  const hoverLean = useMotionValue(0);
+  const smoothHoverLean = useSpring(hoverLean, {
+    stiffness: 90,
+    damping: 20,
+    mass: 0.15,
+  });
+
+  // Attach non-passive wheel listener directly to the carousel stage
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const handleWheel = (e) => {
+      // If inspecting a card in the lightbox modal, don't rotate
+      if (activeCard) return;
+
+      // Prevent window vertical scroll when hovering over the carousel element
+      e.preventDefault();
+
+      // Read delta (supports vertical wheel and trackpad horizontal scrolling)
+      const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+
+      // Smoothly update rotation (positive delta spins forward)
+      const sensitivity = 0.22;
+      rawRotation.set(rawRotation.get() + delta * sensitivity);
+    };
+
+    stage.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      stage.removeEventListener('wheel', handleWheel);
+    };
+  }, [activeCard, rawRotation]);
+
+  // Subtle perspective lean following cursor on hover
+  const handleMouseMove = (e) => {
+    if (!stageRef.current) return;
+    const rect = stageRef.current.getBoundingClientRect();
+    const normX = ((e.clientX - rect.left) / rect.width) * 2 - 1; // -1 to +1
+    hoverLean.set(normX * 12);
+  };
+
+  const handleMouseLeave = () => {
+    hoverLean.set(0);
+  };
 
   const handleClick = (card) => {
     setActiveCard(card);
-    setIsCarouselActive(false);
-    controls.stop();
   };
 
   const handleClose = () => {
     setActiveCard(null);
-    setIsCarouselActive(true);
   };
 
   return (
@@ -239,22 +269,28 @@ export default function PhotoCarousel({ cards = DEFAULT_CARDS }) {
         )}
       </AnimatePresence>
 
-      {/* 3D Carousel Stage */}
-      <div className="relative h-[380px] sm:h-[440px] md:h-[480px] w-full overflow-hidden">
+      {/* 3D Carousel Stage with Wheel & Hover Listeners */}
+      <div
+        ref={stageRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        className="relative h-[380px] sm:h-[440px] md:h-[480px] w-full overflow-hidden"
+      >
         <Carousel
           handleClick={handleClick}
-          controls={controls}
           cards={cards}
-          isCarouselActive={isCarouselActive}
+          smoothRotation={smoothRotation}
+          smoothHoverLean={smoothHoverLean}
         />
       </div>
 
-      {/* Instruction indicator */}
+      {/* HUD Instruction Cue */}
       <div
-        className="text-center font-mono text-[10px] tracking-[0.22em] text-white/30 uppercase mt-2"
+        className="text-center font-mono text-[10px] tracking-[0.22em] text-white/35 uppercase mt-3 flex items-center justify-center gap-2"
         style={{ fontFamily: '"DM Mono", monospace' }}
       >
-        ↔ Drag horizontally to spin · Click frame to inspect
+        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#E8202A]" />
+        <span>Scroll mouse wheel over reel to rotate · Click frame to inspect</span>
       </div>
     </div>
   );
