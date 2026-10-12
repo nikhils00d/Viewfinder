@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PhotoCarousel from '../components/PhotoCarousel';
+import HangingPolaroidGallery from '../components/HangingPolaroidGallery';
 const ViewfinderBrackets = () => (
   <div className="absolute inset-0 pointer-events-none z-10">
     <svg className="absolute top-[10vw] left-[10vw]" width="41.5" height="41.5" viewBox="0 0 41.5 41.5" fill="none">
@@ -302,6 +303,59 @@ export default function LandingPage() {
         {/* The Referenced 3D Draggable Photo Carousel */}
         <div className="w-full max-w-6xl mx-auto mt-10 sm:mt-14">
           <PhotoCarousel />
+        </div>
+      </section>
+
+      {/* Third Section — Monthly Photowalks (Beyond the Frame) */}
+      {/* Third Section — Monthly Photowalks (Spacious, Minimal, Beyond the Frame) */}
+      <section
+        id="photowalks"
+        className="relative z-10 w-full min-h-[120vh] flex flex-col items-center justify-center px-6 sm:px-12 md:px-20 text-center bg-transparent select-none py-36"
+      >
+        <div className="max-w-3xl mx-auto flex flex-col items-center mb-16 sm:mb-24">
+          {/* Restrained Overline */}
+          <div
+            className="flex items-center gap-3 text-white/40 uppercase mb-6 sm:mb-8 font-mono text-[11px] tracking-[0.26em]"
+            style={{ fontFamily: '"DM Mono", monospace' }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-[#E8202A]"
+              style={{ animation: 'redPulse 1.5s ease-in-out infinite' }}
+            />
+            <span>Photowalks · Monthly Expeditions · ADGIPS</span>
+          </div>
+
+          {/* Majestic Centered Headline */}
+          <h2
+            className="italic text-white font-normal"
+            style={{
+              fontFamily: '"Playfair Display", serif',
+              fontSize: 'clamp(44px, 6vw, 78px)',
+              lineHeight: 1.15,
+              letterSpacing: '0.02em',
+            }}
+          >
+            Beyond the Frame.
+          </h2>
+
+          {/* Generous Negative Space & Minimal Narrative */}
+          <p
+            className="mt-6 sm:mt-8 text-white/60 max-w-xl mx-auto font-light"
+            style={{
+              fontFamily: '"Inter", sans-serif',
+              fontSize: 'clamp(14px, 1.25vw, 17px)',
+              lineHeight: 1.85,
+              letterSpacing: '0.015em',
+            }}
+          >
+            Every month, we step out with our cameras to explore new places,
+            experiment with perspectives, and turn ordinary moments into extraordinary frames.
+          </p>
+        </div>
+
+        {/* The Hanging Polaroid Gallery with Organic Curved Thread */}
+        <div className="w-full max-w-7xl mx-auto">
+          <HangingPolaroidGallery />
         </div>
       </section>
     </div>
