@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PhotoCarousel from '../components/PhotoCarousel';
 import HangingPolaroidGallery from '../components/HangingPolaroidGallery';
+import GlassNavbar from '../components/GlassNavbar';
 const ViewfinderBrackets = () => (
   <div className="absolute inset-0 pointer-events-none z-10">
     <svg className="absolute top-[10vw] left-[10vw]" width="41.5" height="41.5" viewBox="0 0 41.5 41.5" fill="none">
@@ -34,7 +35,7 @@ const RedDot = () => (
 const HeroText = () => (
   <div
     className="absolute left-1/2 -translate-x-1/2 text-center whitespace-nowrap z-10 flex flex-col items-center"
-    style={{ top: 'calc(50% - 290px)' }}
+    style={{ top: 'calc(50% - 260px)' }}
   >
     <div
       className="italic text-white"
@@ -115,6 +116,468 @@ const RightHUD = () => (
   </div>
 );
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function isValidIndianMobile(num) {
+  const cleaned = String(num).replace(/[\s\-]/g, '').replace(/^(\+91|0)/, '');
+  return /^[6-9]\d{9}$/.test(cleaned);
+}
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// ── Shared field style ────────────────────────────────────────────────────────
+const FIELD_BASE = {
+  width: '100%',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.10)',
+  borderRadius: '10px',
+  padding: '13px 16px',
+  fontFamily: '"Inter", sans-serif',
+  fontSize: '14px',
+  fontWeight: 300,
+  color: '#fff',
+  outline: 'none',
+  transition: 'border-color 200ms ease, background 200ms ease',
+  boxSizing: 'border-box',
+};
+
+const FIELD_ERR = {
+  ...FIELD_BASE,
+  borderColor: 'rgba(232,32,42,0.55)',
+  background: 'rgba(232,32,42,0.05)',
+};
+
+function Field({ label, required, error, id, children }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left' }}>
+      <label
+        htmlFor={id}
+        style={{
+          fontFamily: '"DM Mono", monospace',
+          fontSize: '10px',
+          letterSpacing: '0.13em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.40)',
+        }}
+      >
+        {label}
+        {required && (
+          <span style={{ color: 'rgba(232,32,42,0.80)', marginLeft: '4px' }} aria-label="required">*</span>
+        )}
+      </label>
+      {children}
+      {error && (
+        <p
+          role="alert"
+          style={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: '10px',
+            letterSpacing: '0.08em',
+            color: 'rgba(232,32,42,0.85)',
+            margin: 0,
+          }}
+        >
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ── Contact Section ───────────────────────────────────────────────────────────
+function ContactSection() {
+  const EMPTY = { name: '', mobile: '', purpose: '', institute: '', email: '' };
+  const [fields, setFields] = useState(EMPTY);
+  const [errors, setErrors] = useState({});
+  const [status, setStatus] = useState('idle'); // idle | submitting | success | error
+  const [serverMsg, setServerMsg] = useState('');
+
+  const set = useCallback((key) => (e) => {
+    setFields((f) => ({ ...f, [key]: e.target.value }));
+    setErrors((er) => ({ ...er, [key]: undefined }));
+  }, []);
+
+  const validate = () => {
+    const errs = {};
+    if (!fields.name.trim()) errs.name = 'Name is required.';
+    else if (fields.name.trim().length > 120) errs.name = 'Name is too long.';
+
+    if (!fields.mobile.trim()) {
+      errs.mobile = 'Mobile number is required.';
+    } else if (!isValidIndianMobile(fields.mobile.trim())) {
+      errs.mobile = 'Enter a valid 10-digit Indian mobile number.';
+    }
+
+    if (fields.email.trim() && !isValidEmail(fields.email.trim())) {
+      errs.email = 'Enter a valid email address.';
+    }
+    return errs;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
+    }
+    setStatus('submitting');
+    setServerMsg('');
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/contact`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fields),
+        }
+      );
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStatus('success');
+        setFields(EMPTY);
+        setErrors({});
+        setServerMsg(data.message || 'Enquiry sent successfully.');
+      } else {
+        setStatus('error');
+        setServerMsg(data.message || 'Something went wrong. Please try again.');
+        if (data.errors) setErrors(data.errors);
+      }
+    } catch {
+      setStatus('error');
+      setServerMsg('Could not reach the server. Please check your connection.');
+    }
+  };
+
+  const inputStyle  = (key) => errors[key] ? FIELD_ERR : FIELD_BASE;
+  const isLoading   = status === 'submitting';
+
+  return (
+    <section
+      id="contact"
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        width: '100%',
+        padding: '120px 24px 100px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      <style>{`
+        .cf-input::placeholder { color: rgba(255,255,255,0.22); }
+        .cf-input:focus { border-color: rgba(255,255,255,0.28) !important; background: rgba(255,255,255,0.06) !important; }
+        .cf-submit { position: relative; overflow: hidden; }
+        .cf-submit::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: rgba(255,255,255,0.06);
+          opacity: 0;
+          transition: opacity 200ms ease;
+        }
+        .cf-submit:hover::after  { opacity: 1; }
+        .cf-submit:active::after { opacity: 0.5; }
+        .cf-submit:focus-visible { outline: 1.5px solid rgba(255,255,255,0.45); outline-offset: 3px; }
+        @media (min-width: 640px) {
+          .cf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        }
+      `}</style>
+
+      {/* Header */}
+      <div style={{ maxWidth: '640px', width: '100%', marginBottom: '48px', textAlign: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            marginBottom: '20px',
+            fontFamily: '"DM Mono", monospace',
+            fontSize: '11px',
+            letterSpacing: '0.24em',
+            textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.35)',
+          }}
+        >
+          <span
+            style={{
+              width: '6px', height: '6px', borderRadius: '50%', background: '#E8202A',
+              animation: 'redPulse 1.5s ease-in-out infinite', flexShrink: 0,
+            }}
+          />
+          Confluenz · ADGIPS · New Delhi
+        </div>
+        <h2
+          style={{
+            fontFamily: '"Playfair Display", serif',
+            fontStyle: 'italic',
+            fontWeight: 400,
+            fontSize: 'clamp(38px, 5vw, 62px)',
+            lineHeight: 1.1,
+            letterSpacing: '0.02em',
+            color: '#fff',
+            margin: '0 0 16px',
+          }}
+        >
+          Get in Touch.
+        </h2>
+        <p
+          style={{
+            fontFamily: '"Inter", sans-serif',
+            fontWeight: 300,
+            fontSize: 'clamp(14px, 1.2vw, 16px)',
+            lineHeight: 1.8,
+            color: 'rgba(255,255,255,0.50)',
+            margin: 0,
+          }}
+        >
+          Whether you want to collaborate, feature your work, or simply say hello —
+          we would love to hear from you.
+        </p>
+      </div>
+
+      {/* Form panel */}
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '580px',
+          background: 'rgba(255,255,255,0.035)',
+          backdropFilter: 'blur(20px) saturate(150%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+          border: '1px solid rgba(255,255,255,0.09)',
+          borderRadius: '20px',
+          padding: '36px 32px 32px',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.40)',
+        }}
+      >
+        {status === 'success' ? (
+          /* ── Success state ─────────────────────────────────────────── */
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            <div
+              style={{
+                width: '44px', height: '44px', borderRadius: '50%',
+                border: '1px solid rgba(255,255,255,0.18)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 20px',
+              }}
+            >
+              <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+                <path d="M1 7L6.5 12.5L17 1" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <p
+              style={{
+                fontFamily: '"Playfair Display", serif',
+                fontStyle: 'italic',
+                fontSize: '22px',
+                color: '#fff',
+                margin: '0 0 10px',
+              }}
+            >
+              Enquiry Sent.
+            </p>
+            <p
+              style={{
+                fontFamily: '"Inter", sans-serif',
+                fontSize: '14px',
+                fontWeight: 300,
+                color: 'rgba(255,255,255,0.50)',
+                lineHeight: 1.7,
+                margin: '0 0 28px',
+              }}
+            >
+              {serverMsg}
+            </p>
+            <button
+              onClick={() => { setStatus('idle'); setServerMsg(''); }}
+              style={{
+                fontFamily: '"DM Mono", monospace',
+                fontSize: '10px',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.38)',
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.10)',
+                borderRadius: '9999px',
+                padding: '8px 20px',
+                cursor: 'pointer',
+              }}
+            >
+              Send another
+            </button>
+          </div>
+        ) : (
+          /* ── Form ─────────────────────────────────────────────────── */
+          <form onSubmit={handleSubmit} noValidate>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+              {/* Row 1: Name + Mobile */}
+              <div className="cf-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+                <Field label="Name" required id="cf-name" error={errors.name}>
+                  <input
+                    id="cf-name"
+                    className="cf-input"
+                    type="text"
+                    placeholder="Your full name"
+                    value={fields.name}
+                    onChange={set('name')}
+                    maxLength={120}
+                    autoComplete="name"
+                    style={inputStyle('name')}
+                    aria-required="true"
+                    disabled={isLoading}
+                  />
+                </Field>
+
+                <Field label="Mobile Number" required id="cf-mobile" error={errors.mobile}>
+                  <input
+                    id="cf-mobile"
+                    className="cf-input"
+                    type="tel"
+                    placeholder="10-digit mobile number"
+                    value={fields.mobile}
+                    onChange={set('mobile')}
+                    maxLength={15}
+                    autoComplete="tel"
+                    inputMode="numeric"
+                    style={inputStyle('mobile')}
+                    aria-required="true"
+                    disabled={isLoading}
+                  />
+                </Field>
+              </div>
+
+              {/* Row 2: Purpose */}
+              <Field label="Purpose / Query" id="cf-purpose" error={errors.purpose}>
+                <textarea
+                  id="cf-purpose"
+                  className="cf-input"
+                  placeholder="What's on your mind? (optional)"
+                  value={fields.purpose}
+                  onChange={set('purpose')}
+                  rows={3}
+                  maxLength={1000}
+                  style={{ ...inputStyle('purpose'), resize: 'vertical', minHeight: '88px' }}
+                  disabled={isLoading}
+                />
+              </Field>
+
+              {/* Row 3: Institute + Email */}
+              <div className="cf-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+                <Field label="Institute / Company" id="cf-institute" error={errors.institute}>
+                  <input
+                    id="cf-institute"
+                    className="cf-input"
+                    type="text"
+                    placeholder="Where are you from? (optional)"
+                    value={fields.institute}
+                    onChange={set('institute')}
+                    maxLength={120}
+                    style={inputStyle('institute')}
+                    disabled={isLoading}
+                  />
+                </Field>
+
+                <Field label="Email" id="cf-email" error={errors.email}>
+                  <input
+                    id="cf-email"
+                    className="cf-input"
+                    type="email"
+                    placeholder="your@email.com (optional)"
+                    value={fields.email}
+                    onChange={set('email')}
+                    maxLength={200}
+                    autoComplete="email"
+                    style={inputStyle('email')}
+                    disabled={isLoading}
+                  />
+                </Field>
+              </div>
+
+              {/* Required note */}
+              <p
+                style={{
+                  fontFamily: '"DM Mono", monospace',
+                  fontSize: '10px',
+                  letterSpacing: '0.08em',
+                  color: 'rgba(255,255,255,0.25)',
+                  margin: '2px 0 0',
+                }}
+              >
+                <span style={{ color: 'rgba(232,32,42,0.70)' }}>*</span>
+                {' '}Name and Mobile Number are required.
+              </p>
+
+              {/* Server error */}
+              {status === 'error' && serverMsg && (
+                <p
+                  role="alert"
+                  style={{
+                    fontFamily: '"DM Mono", monospace',
+                    fontSize: '11px',
+                    letterSpacing: '0.08em',
+                    color: 'rgba(232,32,42,0.85)',
+                    margin: 0,
+                    padding: '10px 14px',
+                    background: 'rgba(232,32,42,0.06)',
+                    border: '1px solid rgba(232,32,42,0.18)',
+                    borderRadius: '8px',
+                  }}
+                >
+                  {serverMsg}
+                </p>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                className="cf-submit"
+                disabled={isLoading}
+                style={{
+                  marginTop: '4px',
+                  width: '100%',
+                  padding: '14px 24px',
+                  fontFamily: '"DM Mono", monospace',
+                  fontSize: '11px',
+                  fontWeight: 400,
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  color: isLoading ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.82)',
+                  background: 'rgba(255,255,255,0.07)',
+                  border: '1px solid rgba(255,255,255,0.13)',
+                  borderRadius: '10px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  transition: 'color 200ms ease, border-color 200ms ease',
+                  boxSizing: 'border-box',
+                }}
+              >
+                {isLoading ? 'Sending\u2026' : 'Send Enquiry'}
+              </button>
+
+            </div>
+          </form>
+        )}
+      </div>
+
+      {/* Footer line */}
+      <p
+        style={{
+          marginTop: '64px',
+          fontFamily: '"DM Mono", monospace',
+          fontSize: '10px',
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.16)',
+        }}
+      >
+        ViewFinder by Confluenz — {new Date().getFullYear()}
+      </p>
+    </section>
+  );
+}
+
 export default function LandingPage() {
   const [scrollData, setScrollData] = useState({
     blurPx: 20,
@@ -190,6 +653,9 @@ export default function LandingPage() {
 
   return (
     <div className="w-full text-white">
+      {/* Glass Navbar */}
+      <GlassNavbar />
+
       {/* Fixed Background for entire page — continuous across all sections */}
       <div className="fixed inset-0 -z-10">
         {/* Background Photo */}
@@ -358,6 +824,10 @@ export default function LandingPage() {
           <HangingPolaroidGallery />
         </div>
       </section>
+
+      {/* Contact Section */}
+      <ContactSection />
+
     </div>
   );
 }

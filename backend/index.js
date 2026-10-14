@@ -19,6 +19,8 @@ app.use(express.json()); // Allows us to parse JSON in request bodies
 app.use(cookieParser()); // Allows us to parse HTTP-only cookies (for JWTs)
 
 // Routes
+const contactRoutes = require('./routes/contactRoutes');
+app.use('/api/contact', contactRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {
