@@ -43,10 +43,10 @@ const userSchema = new mongoose.Schema(
 );
 
 // Pre-save hook to hash password before saving to database
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) {
-    next();
+    return;
   }
 
   // Generate a salt with 10 rounds

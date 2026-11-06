@@ -1,35 +1,15 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const User = require('./models/User.js');
-
-dotenv.config();
-
-mongoose.connect(process.env.MONGO_URI)
-  .then(async () => {
-    console.log("Connected to MongoDB.");
-    const email = 'ncsood2000@gmail.com';
-    const user = await User.findOne({ email });
-    if (!user) {
-      console.log(`User ${email} not found. Creating it...`);
-      const newUser = new User({
-        name: 'Nikhil Sood',
-        email: email,
-        phone: '0000000000',
-        password: 'AdminPassword123!',
-        role: 'Admin',
-        status: 'active'
-      });
-      await newUser.save();
-      console.log(`User ${email} created as Admin and active. Password: AdminPassword123!`);
-    } else {
-      user.role = 'Admin';
-      user.status = 'active';
-      await user.save();
-      console.log(`User ${email} is now an Admin and active.`);
-    }
-    process.exit(0);
-  })
-  .catch(err => {
-    console.error(err);
-    process.exit(1);
-  });
+const User = require('./models/User');
+async function main() {
+  const { ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME = 'Confluenz Admin' } = process.env;
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD || ADMIN_PASSWORD.length < 12) throw new Error('Set ADMIN_EMAIL and ADMIN_PASSWORD (at least 12 characters).');
+  await mongoose.connect(process.env.MONGO_URI);
+  let user = await User.findOne({ email: ADMIN_EMAIL });
+  if (!user) user = new User({ email: ADMIN_EMAIL, name: ADMIN_NAME, phone: 'not provided' });
+  user.password = ADMIN_PASSWORD;
+  user.role = 'Admin'; user.status = 'active';
+  await user.save();
+  console.log('Administrator account saved.');
+}
+main().catch(e => { console.error(e.message); process.exitCode = 1; }).finally(() => mongoose.disconnect());

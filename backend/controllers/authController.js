@@ -46,12 +46,18 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password || email.length > 254 || password.length > 200) {
+      return res.status(400).json({ message: 'Enter your email and password' });
+    }
 
     // Find user and explicitly select password since we hid it by default
     const user = await User.findOne({ email }).select('+password');
 
     // Check if user exists and password matches
     if (user && (await user.matchPassword(password))) {
+      if (user.status !== 'active' || user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Active administrator access required' });
+      }
       // Generate token and set it in cookie
       generateToken(res, user._id);
 

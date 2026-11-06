@@ -1,3 +1,4 @@
+import { PHOTOWALK_MEMORIES } from '../photowalkDefaults';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   AnimatePresence,
@@ -8,97 +9,6 @@ import {
 
 const CARD_WIDTH = 240;
 const GAP = 56;
-
-const PHOTOWALK_MEMORIES = [
-  {
-    id: 'yamuna-ghat',
-    title: 'Yamuna Ghat Sunrise',
-    location: 'Old Delhi',
-    date: 'November 2025',
-    tag: '35MM · GOLDEN HOUR',
-    note: 'Early morning mist, migratory birds, and dawn reflections over the river.',
-    url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?crop=entropy&cs=tinysrgb&fit=crop&w=700&h=700&q=80',
-    rotation: -2.2,
-    hangY: 28,
-  },
-  {
-    id: 'chandni-chowk',
-    title: 'Old Delhi Havelis',
-    location: 'Chandni Chowk',
-    date: 'December 2025',
-    tag: '50MM · CANDID',
-    note: 'Chasing narrow sunbeams slicing through historic archways and spice bazaars.',
-    url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?crop=entropy&cs=tinysrgb&fit=crop&w=700&h=700&q=80',
-    rotation: 1.8,
-    hangY: 34,
-  },
-  {
-    id: 'hauz-khas',
-    title: 'Hauz Khas Arches',
-    location: 'Hauz Khas',
-    date: 'January 2026',
-    tag: 'RAW · ARCHITECTURE',
-    note: 'Stone arches framing the winter reservoir and afternoon silhouettes.',
-    url: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?crop=entropy&cs=tinysrgb&fit=crop&w=700&h=700&q=80',
-    rotation: -1.5,
-    hangY: 29,
-  },
-  {
-    id: 'sunder-nursery',
-    title: 'Sunder Nursery Flora',
-    location: 'Heritage Gardens',
-    date: 'February 2026',
-    tag: 'F/1.8 · BOTANICAL',
-    note: 'Soft bokeh and morning backlight filtering through 16th-century pavilions.',
-    url: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?crop=entropy&cs=tinysrgb&fit=crop&w=700&h=700&q=80',
-    rotation: 2.3,
-    hangY: 35,
-  },
-  {
-    id: 'lodhi-art',
-    title: 'Lodhi Art Murals',
-    location: 'Lodhi Colony',
-    date: 'March 2026',
-    tag: '28MM · STREET ART',
-    note: 'Vibrant outdoor murals juxtaposed against quiet residential geometry.',
-    url: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?crop=entropy&cs=tinysrgb&fit=crop&w=700&h=700&q=80',
-    rotation: -2.0,
-    hangY: 31,
-  },
-  {
-    id: 'connaught-place',
-    title: 'CP Colonnades',
-    location: 'Connaught Place',
-    date: 'April 2026',
-    tag: '35MM · MONOCHROME',
-    note: 'Classic white colonnades and long shadows in high-contrast black & white.',
-    url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?crop=entropy&cs=tinysrgb&fit=crop&w=700&h=700&q=80',
-    rotation: 1.6,
-    hangY: 36,
-  },
-  {
-    id: 'mehrauli-park',
-    title: 'Mehrauli Monoliths',
-    location: 'Mehrauli Park',
-    date: 'May 2026',
-    tag: 'F/2.8 · HISTORIC',
-    note: 'Ancient stepwells and moss-covered stones in quiet evening solitude.',
-    url: 'https://images.unsplash.com/photo-1597040663342-45b6af3d91a5?crop=entropy&cs=tinysrgb&fit=crop&w=700&h=700&q=80',
-    rotation: -2.6,
-    hangY: 30,
-  },
-  {
-    id: 'rooftop-glow',
-    title: 'Sunset Overlook',
-    location: 'Campus Quad',
-    date: 'June 2026',
-    tag: '85MM · HORIZON',
-    note: 'The golden hour farewell frame with cameras slung over our shoulders.',
-    url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?crop=entropy&cs=tinysrgb&fit=crop&w=700&h=700&q=80',
-    rotation: 2.0,
-    hangY: 33,
-  },
-];
 
 // Clothespin Component pinning the top of the Polaroid to the thread
 const Clothespin = () => (
@@ -117,7 +27,7 @@ const Clothespin = () => (
   </div>
 );
 
-export default function HangingPolaroidGallery() {
+export default function HangingPolaroidGallery({ photos = PHOTOWALK_MEMORIES }) {
   const [activePhoto, setActivePhoto] = useState(null);
   const containerRef = useRef(null);
   const trackRef = useRef(null);
@@ -200,7 +110,7 @@ export default function HangingPolaroidGallery() {
 
   // Generate continuous natural gravity-curved thread path
   const threadSvgData = useMemo(() => {
-    const points = PHOTOWALK_MEMORIES.map((m, idx) => ({
+    const points = photos.map((m, idx) => ({
       x: idx * (CARD_WIDTH + GAP) + CARD_WIDTH / 2,
       y: m.hangY - 2, // Exactly aligns with clothespin spring clip
     }));
@@ -236,7 +146,7 @@ export default function HangingPolaroidGallery() {
     path += `C ${last.x + 80} ${last.y + 6}, ${last.x + 180} ${last.y + 4}, ${last.x + rightPad} ${last.y - 12}`;
 
     return { d: path, width: totalW };
-  }, []);
+  }, [photos]);
 
   return (
     <div className="relative w-full select-none">
@@ -355,10 +265,14 @@ export default function HangingPolaroidGallery() {
 
           {/* Hanging Polaroids pinned to the thread */}
           <div className="relative z-20 flex items-start pl-2 pr-24" style={{ gap: `${GAP}px` }}>
-            {PHOTOWALK_MEMORIES.map((photo) => (
+            {photos.map((photo) => (
               <div
                 key={photo.id}
-                onClick={() => setActivePhoto(photo)}
+                role={photo.link ? 'link' : 'button'}
+                tabIndex={0}
+                aria-label={`Open ${photo.title}`}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (photo.link) window.open(photo.link, '_blank', 'noopener,noreferrer'); else setActivePhoto(photo); } }}
+                onClick={() => { if (photo.link) window.open(photo.link, '_blank', 'noopener,noreferrer'); else setActivePhoto(photo); }}
                 className="relative shrink-0 cursor-pointer group transition-transform duration-300 hover:scale-[1.03] hover:z-40"
                 style={{
                   width: `${CARD_WIDTH}px`,
@@ -415,7 +329,7 @@ export default function HangingPolaroidGallery() {
         style={{ fontFamily: '"DM Mono", monospace' }}
       >
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#E8202A]" />
-        <span>Scroll mouse wheel over reel to explore · Click Polaroid to inspect</span>
+        <span>Scroll mouse wheel over reel to explore · Click a frame to open</span>
       </div>
     </div>
   );
