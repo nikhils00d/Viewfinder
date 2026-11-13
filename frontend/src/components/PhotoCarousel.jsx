@@ -294,14 +294,7 @@ export default function PhotoCarousel({ cards = DEFAULT_CARDS }) {
         />
       </motion.div>
 
-      {/* HUD Instruction Cue */}
-      <div
-        className="text-center font-mono text-[10px] tracking-[0.22em] text-white/35 uppercase mt-3 flex items-center justify-center gap-2"
-        style={{ fontFamily: '"DM Mono", monospace' }}
-      >
-        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#E8202A]" />
-        <span>Scroll mouse wheel over reel to rotate · Click frame to inspect</span>
-      </div>
+
     </div>
   );
 }

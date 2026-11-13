@@ -331,13 +331,7 @@ export default function HangingPolaroidGallery({ photos = PHOTOWALK_MEMORIES }) 
       </div>
 
       {/* Subtle, spacious instruction cue */}
-      <div
-        className="text-center font-mono text-[9px] tracking-[0.26em] text-white/30 uppercase mt-8 flex items-center justify-center gap-2"
-        style={{ fontFamily: '"DM Mono", monospace' }}
-      >
-        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#E8202A]" />
-        <span>Scroll mouse wheel over reel to explore · Click a frame to open</span>
-      </div>
+
     </div>
   );
 }

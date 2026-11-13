@@ -46,7 +46,7 @@ export default function EventsPage({ collection = false }) {
     <div className="archive-grid-bg" aria-hidden="true" />
     <header className="archive-intro">
       <p className="archive-kicker"><span /> THE CONFLUENZ COLLECTION</p>
-      <h1>{collection ? <>Chitrakala.<br /><em>A different perspective.</em></> : <>Moments worth<br /><em>coming back to.</em></>}</h1>
+      <h1>{collection ? <>Chitraka.<br /><em>A different perspective.</em></> : <>Moments worth<br /><em>coming back to.</em></>}</h1>
       <p className="archive-subtitle">{collection ? <>Images, experiments, and stories by our community.<br />Discover the collections behind the craft.</> : <>From the first frame to the final celebration.<br />Find your event. Revisit your memories.</>}</p>
       <a className="archive-jump" href="#archive-results">Explore the archive <span aria-hidden="true">↓</span></a>
     </header>

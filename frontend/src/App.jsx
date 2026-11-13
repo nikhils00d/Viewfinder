@@ -1,6 +1,6 @@
-import ChitrakalaPage from './pages/ChitrakalaPage';
+import ChitrakaPage from './pages/ChitrakaPage';
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Link, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import EventsPage from './pages/EventsPage';
 import AdminPage from './pages/AdminPage';
@@ -8,7 +8,7 @@ import AdminPage from './pages/AdminPage';
 function PagePosition() {
   const { pathname, hash } = useLocation();
   useEffect(() => {
-    document.title = `${pathname.startsWith('/admin') ? 'Archive Studio' : pathname === '/events' ? 'Event Archive' : pathname === '/chitrakala' ? 'Chitrakala' : 'Viewfinder'} · Confluenz`;
+    document.title = `${pathname.startsWith('/admin') ? 'Archive Studio' : pathname === '/events' ? 'Event Archive' : pathname === '/chitraka' ? 'Chitraka' : 'Viewfinder'} · Confluenz`;
     const raf = requestAnimationFrame(() => {
       if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
       else window.scrollTo(0, 0);
@@ -25,7 +25,8 @@ export default function App() {
       <div id="main-content" tabIndex={-1}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/chitrakala" element={<ChitrakalaPage />} />
+        <Route path="/chitraka" element={<ChitrakaPage />} />
+        <Route path="/chitrakala" element={<Navigate to="/chitraka" replace />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/admin/login" element={<AdminPage login />} />
         <Route path="/admin" element={<AdminPage />} />

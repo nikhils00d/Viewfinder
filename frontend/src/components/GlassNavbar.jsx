@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { label: 'About Us',   href: '/#confluenz',  type: 'anchor' },
   { label: 'Events',     href: '/events',      type: 'route'  },
   { label: 'Works',      href: '/#photowalks', type: 'anchor' },
-  { label: 'Chitrakala', href: '/chitrakala',  type: 'route'  },
+  { label: 'Chitraka', href: '/chitraka',  type: 'route'  },
   { label: 'Contact Us', href: '/#contact',    type: 'anchor' },
 ];
 
@@ -363,10 +363,13 @@ export default function GlassNavbar({ scrollStartRef }) {
         }
 
         @media (max-width: 767px) {
-          .gnav-mobile-brand { display: block; }
+          .gnav-root { justify-content: flex-start; padding-left: 16px; padding-right: 16px; }
+          .gnav-mobile-brand { display: none; }
           .gnav-links     { display: none; }
-          .gnav-hamburger { display: flex; }
-          .gnav-pill      { padding: 8px 16px !important; }
+          .gnav-hamburger { display: flex; width: 48px; height: 48px; margin: 0; border-radius: 50%; }
+          .gnav-pill { width: 50px !important; height: 50px; padding: 0 !important; border-radius: 50%; flex-shrink: 0; }
+          .gnav-mobile-menu { left: 16px; transform: translateY(-6px); }
+          .gnav-mobile-menu.is-visible { transform: translateY(0); }
         }
 
         @media (prefers-reduced-motion: reduce) {

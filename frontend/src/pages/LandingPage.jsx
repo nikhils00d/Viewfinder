@@ -37,8 +37,7 @@ const RedDot = () => (
 
 const HeroText = () => (
   <div
-    className="absolute left-1/2 -translate-x-1/2 text-center whitespace-nowrap z-10 flex flex-col items-center"
-    style={{ top: 'calc(50% - 290px)' }}
+    className="hero-title absolute left-1/2 -translate-x-1/2 text-center whitespace-nowrap z-10 flex flex-col items-center"
   >
     <div
       className="italic text-white"
@@ -731,7 +730,7 @@ export default function LandingPage() {
       {/* Second Section — Confluenz (Spacious, Minimal, Centered with Referenced 3D Reel) */}
       <section
         id="confluenz"
-        className="relative z-10 w-full min-h-[120vh] flex flex-col items-center justify-center px-6 sm:px-12 md:px-20 text-center bg-transparent select-none py-28"
+        className="relative z-10 w-full flex flex-col items-center justify-center px-6 sm:px-12 md:px-20 text-center bg-transparent select-none pt-28 pb-10 sm:pb-14"
         style={{
           opacity: scrollData.s2Opacity,
           transform: `translateY(${scrollData.s2TranslateY}px)`,
@@ -790,7 +789,7 @@ export default function LandingPage() {
       {/* Third Section — Monthly Photowalks (Spacious, Minimal, Beyond the Frame) */}
       <section
         id="photowalks"
-        className="relative z-10 w-full min-h-[120vh] flex flex-col items-center justify-center px-6 sm:px-12 md:px-20 text-center bg-transparent select-none py-36"
+        className="relative z-10 w-full flex flex-col items-center justify-center px-6 sm:px-12 md:px-20 text-center bg-transparent select-none pt-10 sm:pt-14 pb-28"
       >
         <div className="max-w-3xl mx-auto flex flex-col items-center mb-16 sm:mb-24">
           {/* Restrained Overline */}

@@ -12,7 +12,7 @@ function httpsUrl(value, drive = false) {
 }
 function eventData(body = {}) {
   const { section = 'events', title, date, description = '', tags = '', driveUrl, published = false, pinned = false, pinOrder = 0, art = 'ember' } = body || {};
-  if (!['events', 'chitrakala'].includes(section)) throw new Error('Choose Events or Chitrakala as the destination.');
+  if (!['events', 'chitrakala'].includes(section)) throw new Error('Choose Events or Chitraka as the destination.');
   const cleanTitle = text(title, 'Event title', 120, true);
   if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) throw new Error('Choose a valid calendar date.');
   if (!httpsUrl(driveUrl, true)) throw new Error('Use an HTTPS link from drive.google.com or docs.google.com.');

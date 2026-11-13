@@ -25,6 +25,10 @@ body {
 }
 
 html { color-scheme: dark; scroll-padding-top: 90px; }
+.hero-title { top: max(110px, calc(50% - 250px)); }
+@media (max-width: 767px) {
+  .hero-title { top: max(100px, calc(50% - 250px)); }
+}
 body { font-family: Inter, sans-serif; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 2px solid #e76b70; outline-offset: 4px; }
