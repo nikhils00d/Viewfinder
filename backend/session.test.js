@@ -24,7 +24,8 @@ test('production Vercel login, authenticated me, preflight and logout cookie att
     res = await fetch(base + '/auth/login', { method: 'POST', headers, body: JSON.stringify({ email: user.email, password: 'test-password' }) });
     assert.equal(res.status, 200);
     const cookie = res.headers.get('set-cookie');
-    for (const part of ['HttpOnly', 'Secure', 'SameSite=None', 'Path=/']) assert.ok(cookie.includes(part), `${part} missing from login cookie`);
+    for (const part of ['HttpOnly', 'Secure', 'SameSite=Lax', 'Path=/']) assert.ok(cookie.includes(part), `${part} missing from login cookie`);
+    assert.ok(!cookie.includes('Domain='));
     assert.equal(res.headers.get('access-control-allow-origin'), origin);
     assert.equal(res.headers.get('access-control-allow-credentials'), 'true');
     res = await fetch(base + '/admin/me', { headers: { ...headers, Cookie: cookie.split(';')[0] } });
@@ -35,7 +36,8 @@ test('production Vercel login, authenticated me, preflight and logout cookie att
     res = await fetch(base + '/auth/logout', { method: 'POST', headers });
     assert.equal(res.status, 200);
     const cleared = res.headers.get('set-cookie');
-    for (const part of ['HttpOnly', 'Secure', 'SameSite=None', 'Path=/', 'Expires=Thu, 01 Jan 1970']) assert.ok(cleared.includes(part), `${part} missing from logout cookie`);
+    for (const part of ['HttpOnly', 'Secure', 'SameSite=Lax', 'Path=/', 'Expires=Thu, 01 Jan 1970']) assert.ok(cleared.includes(part), `${part} missing from logout cookie`);
+    assert.ok(!cleared.includes('Domain='));
     res = await fetch(base + '/auth/logout', { method: 'POST', headers: { ...headers, Origin: 'https://untrusted.example' } });
     assert.equal(res.status, 403);
     assert.equal(res.headers.get('access-control-allow-origin'), null);

@@ -79,7 +79,7 @@ export default function AdminPage({ login = false }) {
         await api('/auth/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(data)) });
         try { await api('/admin/me'); }
         catch (error) {
-          if ([401, 403].includes(error.status)) throw new Error('Sign in succeeded, but the session cookie was not accepted. Check browser cookie settings or use a same-site API domain.');
+          if ([401, 403].includes(error.status)) throw new Error('Sign in succeeded, but the session check failed. Reload and try again. If this continues, check the deployed API proxy and session configuration.');
           throw error;
         }
         navigate('/admin', { replace: true });

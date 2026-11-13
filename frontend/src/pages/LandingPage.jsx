@@ -230,9 +230,10 @@ function ContactSection() {
       const timeout = setTimeout(() => controller.abort(), 15000);
       let res;
       try { res = await fetch(
-        `${import.meta.env.VITE_API_URL || ''}/api/contact`,
+        '/api/contact',
         {
           method: 'POST',
+          credentials: 'include',
           signal: controller.signal,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(fields),

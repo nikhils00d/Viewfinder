@@ -2,7 +2,7 @@ export async function api(path, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12000);
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api${path}`, {
+    const res = await fetch(`/api${path}`, {
       ...options, credentials: 'include', signal: options.signal || controller.signal,
       headers: { 'Content-Type': 'application/json', ...options.headers },
     });

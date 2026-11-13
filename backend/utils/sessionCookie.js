@@ -3,7 +3,7 @@ module.exports = function sessionCookie() {
   return {
     httpOnly: true,
     secure: production,
-    sameSite: production ? 'none' : 'lax',
+    sameSite: 'lax',
     path: '/',
   };
 };
