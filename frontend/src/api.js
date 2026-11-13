@@ -3,7 +3,7 @@ export async function api(path, options = {}) {
   const timer = setTimeout(() => controller.abort(), 12000);
   try {
     const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api${path}`, {
-      credentials: 'include', ...options, signal: options.signal || controller.signal,
+      ...options, credentials: 'include', signal: options.signal || controller.signal,
       headers: { 'Content-Type': 'application/json', ...options.headers },
     });
     const body = await res.json().catch(() => null);

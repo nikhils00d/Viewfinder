@@ -46,7 +46,7 @@ export default function AdminPage({ login = false }) {
   }
   useEffect(() => {
     let alive = true;
-    setLoading(true); setError(''); setReady(false);
+    setLoading(true); setError(''); setReady(false); setUser(null);
     api('/admin/me').then(async u => {
       if (!alive) return;
       setUser(u);
@@ -75,7 +75,15 @@ export default function AdminPage({ login = false }) {
     {!loading && !login && !ready && <button onClick={() => setAttempt(attempt + 1)}>Retry loading studio</button>}
     {loading ? <p role="status">Loading studio…</p> : login ? <form className="admin-panel login-panel" onSubmit={e => {
       e.preventDefault(); const data = new FormData(e.currentTarget);
-      action(async () => { await api('/auth/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(data)) }); navigate('/admin', { replace: true }); }, '');
+      action(async () => {
+        await api('/auth/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(data)) });
+        try { await api('/admin/me'); }
+        catch (error) {
+          if ([401, 403].includes(error.status)) throw new Error('Sign in succeeded, but the session cookie was not accepted. Check browser cookie settings or use a same-site API domain.');
+          throw error;
+        }
+        navigate('/admin', { replace: true });
+      }, '');
     }}>
       <label>Email<input name="email" type="email" autoComplete="username" required /></label>
       <label>Password<input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required maxLength={200} /></label><button type="button" aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide password' : 'Show password'}</button>

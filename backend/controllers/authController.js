@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const sessionCookie = require('../utils/sessionCookie');
 
 // @desc    Register a new user (Pending approval)
 // @route   POST /api/auth/register
@@ -82,10 +83,7 @@ const loginUser = async (req, res) => {
 // @route   POST /api/auth/logout
 // @access  Public
 const logoutUser = (req, res) => {
-  res.cookie('jwt', '', {
-    httpOnly: true,
-    expires: new Date(0),
-  });
+  res.clearCookie('jwt', sessionCookie());
   res.status(200).json({ message: 'Logged out successfully' });
 };
 
