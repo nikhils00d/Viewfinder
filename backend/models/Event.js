@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 module.exports = mongoose.model('Event', new mongoose.Schema({
+  section: { type: String, enum: ['events', 'chitrakala'], default: 'events' },
   title: { type: String, required: true, maxlength: 120 },
   date: { type: String, required: true },
   description: { type: String, default: '', maxlength: 1500 },

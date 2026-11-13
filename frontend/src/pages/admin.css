@@ -13,3 +13,16 @@
 .admin-shell article { border-bottom:1px solid #ffffff20; padding:20px 0; }.admin-shell .admin-error { color:#ff9292; }.admin-shell .admin-notice { color:#9be0af; }
 .login-panel { max-width:440px; margin-top:32px; }.walk-preview { width:100%; height:180px; object-fit:cover; border-radius:8px; }
 @media(max-width:700px) { .admin-columns,.walk-edit-grid { grid-template-columns:1fr; }.admin-shell h1 { font-size:38px; } }
+
+.admin-shell { min-height:100vh; background:radial-gradient(ellipse at 80% 0,#29212222,transparent 50%); }
+.admin-shell header { font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;color:#aaa; }
+.admin-shell h1 { letter-spacing:-.025em; }.admin-shell h3 { overflow-wrap:anywhere; }.admin-shell small { font:10px 'DM Mono',monospace;color:#d1a35e; }
+.admin-shell .admin-panel { background:linear-gradient(140deg,#151517,#101012);border-color:#ffffff14;box-shadow:0 14px 45px #0002; }
+.admin-shell nav { border-bottom:1px solid #ffffff12;padding-bottom:20px; }
+.admin-shell .admin-help { font-size:12px;line-height:1.7;color:#9b9690; }.admin-shell .admin-external { display:inline-block;font-size:11px;color:#aaa;margin-top:8px; }
+.admin-shell .admin-primary { background:#e5ded4;color:#171514;border-color:#e5ded4;min-width:160px; }
+.admin-event-preview { display:flex;justify-content:center;min-height:200px; }.admin-shell input:disabled,.admin-shell textarea:disabled { opacity:.6; }
+.admin-error,.admin-notice { padding:14px 18px;border:1px solid #ffffff20;border-radius:8px; }
+.admin-error { background:#d22d2d0a; }.admin-notice { background:#38a7620a; }
+
+.admin-error,.admin-notice { position:sticky;top:16px;z-index:60;backdrop-filter:blur(20px);background-color:#191719; }

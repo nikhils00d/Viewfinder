@@ -121,7 +121,7 @@ const RightHUD = () => (
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function isValidIndianMobile(num) {
-  const cleaned = String(num).replace(/[\s\-]/g, '').replace(/^(\+91|0)/, '');
+  const cleaned = String(num).replace(/[\s-]/g, '').replace(/^(\+91|0)/, '');
   return /^[6-9]\d{9}$/.test(cleaned);
 }
 function isValidEmail(email) {
@@ -227,14 +227,18 @@ function ContactSection() {
     setStatus('submitting');
     setServerMsg('');
     try {
-      const res = await fetch(
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      let res;
+      try { res = await fetch(
         `${import.meta.env.VITE_API_URL || ''}/api/contact`,
         {
           method: 'POST',
+          signal: controller.signal,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(fields),
         }
-      );
+      ); } finally { clearTimeout(timeout); }
       const data = await res.json();
       if (res.ok && data.success) {
         setStatus('success');
@@ -417,7 +421,7 @@ function ContactSection() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
               {/* Row 1: Name + Mobile */}
-              <div className="cf-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+              <div className="cf-grid-2" style={{ display: 'grid', gap: '16px' }}>
                 <Field label="Name" required id="cf-name" error={errors.name}>
                   <input
                     id="cf-name"
@@ -468,7 +472,7 @@ function ContactSection() {
               </Field>
 
               {/* Row 3: Institute + Email */}
-              <div className="cf-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+              <div className="cf-grid-2" style={{ display: 'grid', gap: '16px' }}>
                 <Field label="Institute / Company" id="cf-institute" error={errors.institute}>
                   <input
                     id="cf-institute"
@@ -665,7 +669,7 @@ export default function LandingPage() {
 
   return (
     <div className="w-full text-white">
-      <GlassNavbar />
+      <GlassNavbar scrollStartRef={heroRef} />
       {/* Fixed Background for entire page — continuous across all sections */}
       <div className="fixed inset-0 -z-10">
         {/* Background Photo */}

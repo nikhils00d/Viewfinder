@@ -1,5 +1,8 @@
+import { createPortal } from 'react-dom';
+import SafeImage from './SafeImage';
+import usePhotoDialog from '../usePhotoDialog';
 import { PHOTOWALK_MEMORIES } from '../photowalkDefaults';
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   AnimatePresence,
   motion,
@@ -29,6 +32,8 @@ const Clothespin = () => (
 
 export default function HangingPolaroidGallery({ photos = PHOTOWALK_MEMORIES }) {
   const [activePhoto, setActivePhoto] = useState(null);
+  const closePhoto = useCallback(() => setActivePhoto(null), []);
+  const dialogRef = usePhotoDialog(activePhoto, closePhoto);
   const containerRef = useRef(null);
   const trackRef = useRef(null);
   const [maxScroll, setMaxScroll] = useState(1200);
@@ -151,14 +156,14 @@ export default function HangingPolaroidGallery({ photos = PHOTOWALK_MEMORIES }) 
   return (
     <div className="relative w-full select-none">
       {/* Lightbox Modal */}
-      <AnimatePresence>
+      {createPortal(<AnimatePresence>
         {activePhoto && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setActivePhoto(null)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
+            className="photo-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
           >
             <motion.div
               initial={{ scale: 0.88, opacity: 0, rotate: activePhoto.rotation }}
@@ -166,14 +171,16 @@ export default function HangingPolaroidGallery({ photos = PHOTOWALK_MEMORIES }) 
               exit={{ scale: 0.88, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative max-w-md w-full bg-[#FAF8F5] text-neutral-900 rounded-sm p-4 sm:p-5 shadow-[0_25px_60px_rgba(0,0,0,0.85)] border border-white/20"
+              ref={dialogRef}
+              role="dialog" aria-modal="true" aria-label={activePhoto.title}
+              className="photo-dialog-card relative max-w-md w-full bg-[#FAF8F5] text-neutral-900 rounded-sm p-4 sm:p-5 shadow-[0_25px_60px_rgba(0,0,0,0.85)] border border-white/20"
             >
               {/* Clothespin atop modal Polaroid */}
               <Clothespin />
 
               {/* Photo Frame */}
               <div className="relative aspect-square w-full bg-neutral-900 overflow-hidden shadow-inner">
-                <img
+                <SafeImage
                   src={activePhoto.url}
                   alt={activePhoto.title}
                   className="w-full h-full object-cover"
@@ -216,7 +223,7 @@ export default function HangingPolaroidGallery({ photos = PHOTOWALK_MEMORIES }) 
                   <button
                     type="button"
                     onClick={() => setActivePhoto(null)}
-                    className="px-2.5 py-1 rounded bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
+                    className="photo-dialog-close rounded bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
                   >
                     CLOSE [ESC]
                   </button>
@@ -225,7 +232,7 @@ export default function HangingPolaroidGallery({ photos = PHOTOWALK_MEMORIES }) 
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
 
       {/* Hanging Gallery Interactive Stage */}
       <div
@@ -290,7 +297,7 @@ export default function HangingPolaroidGallery({ photos = PHOTOWALK_MEMORIES }) 
                 >
                   {/* Square Photo Print */}
                   <div className="relative aspect-square w-full bg-neutral-900 overflow-hidden">
-                    <img
+                    <SafeImage
                       src={photo.url}
                       alt={photo.title}
                       draggable={false}

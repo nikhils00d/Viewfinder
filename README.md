@@ -21,3 +21,12 @@ Serve frontend and API through the same HTTPS origin, proxy `/api` to Express, a
 
 ## Checks
 `npm run build` and `npm run lint` in frontend. `node --test` in backend exercises validation, authorization, and password hooks without writing to MongoDB.
+
+## Reliability and interface improvements
+The archive includes year filters, shareable search URLs (`/events?q=festival&year=2026`), tag filtering, nine events per page, and direct folder links to Drive. The mobile menu supports Escape; photo previews support keyboard navigation, Escape, focus containment and focus restoration. The carousel keeps its wheel motion and supports touch dragging. Broken external thumbnails display a fallback.
+
+Admin forms show unsaved changes, warn before leaving through dashboard links or closing the browser, preview event folder artwork, and preserve edits in other photo walk slots when saving. Browser Back may still leave an unsaved dashboard; save before navigating away. Network requests time out and expose retry/error states.
+
+Contact email requires SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and optionally CONTACT_RECIPIENT in backend/.env. Without SMTP credentials, the form reports that delivery is unavailable rather than reporting success. Chitrakala is managed through Events & collections: choose Chitrakala under Publish to. It shares the draft, publication, pin, search and Drive-link workflow; demonstration collections are no longer presented as real content.
+
+The API refuses to start with the shipped example JWT secret, validates calendar dates and allowed URLs, limits request size, and disables admin response caching. Local development permits loopback origins on alternate Vite ports; production permits FRONTEND_URL only. The health endpoint `/api/health` reports database readiness. No automatic tests send email or modify the configured MongoDB database.

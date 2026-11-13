@@ -14,7 +14,7 @@ function isValidEmail(email) {
 
 function sanitize(str) {
   if (typeof str !== 'string') return '';
-  return str.trim().replace(/[<>]/g, '');
+  return str.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 // ─── mailer factory ──────────────────────────────────────────────────────────
@@ -23,6 +23,8 @@ function createTransporter() {
   return nodemailer.createTransport({
     host:   process.env.SMTP_HOST   || 'smtp.gmail.com',
     port:   parseInt(process.env.SMTP_PORT || '587', 10),
+    connectionTimeout: 10000,
+    socketTimeout: 15000,
     secure: process.env.SMTP_SECURE === 'true', // true = TLS on 465
     auth: {
       user: process.env.SMTP_USER,
@@ -62,6 +64,9 @@ async function submitContact(req, res) {
     const cleanInstitute = sanitize(institute  || '');
     const cleanEmail     = sanitize(email      || '');
 
+    if (typeof purpose === 'string' && purpose.length > 1000) errors.purpose = 'Keep your message within 1000 characters.';
+    if (typeof institute === 'string' && institute.length > 120) errors.institute = 'Institute name is too long.';
+    if (typeof email === 'string' && email.length > 200) errors.email = 'Email is too long.';
     if (cleanEmail && !isValidEmail(cleanEmail)) {
       errors.email = 'Please enter a valid email address.';
     }

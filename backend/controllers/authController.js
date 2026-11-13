@@ -36,7 +36,8 @@ const registerUser = async (req, res) => {
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Authentication request failed:', error.name);
+    res.status(500).json({ message: 'Sign in is temporarily unavailable. Please try again.' });
   }
 };
 
@@ -45,7 +46,7 @@ const registerUser = async (req, res) => {
 // @access  Public
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
     if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password || email.length > 254 || password.length > 200) {
       return res.status(400).json({ message: 'Enter your email and password' });
     }
@@ -72,7 +73,8 @@ const loginUser = async (req, res) => {
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Authentication request failed:', error.name);
+    res.status(500).json({ message: 'Sign in is temporarily unavailable. Please try again.' });
   }
 };
 

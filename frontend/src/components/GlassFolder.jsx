@@ -323,6 +323,7 @@ export default function GlassFolder({
   defaultOpen = false,
   onOpenChange,
   onFileSelect,
+  href,
   width = 340,
   appear = true,
   appearDelay = 0,
@@ -447,9 +448,9 @@ export default function GlassFolder({
               ref={hitRef}
               type="button"
               className="gf-hit"
-              aria-expanded={open}
-              aria-label={`${open ? 'Close' : 'Open'} ${label}, ${count} ${count === 1 ? 'item' : 'items'}`}
-              onClick={() => setOpen(!open)}
+              aria-expanded={href ? undefined : open}
+              aria-label={href ? `Open ${label} on Google Drive (new tab)` : `${open ? 'Close' : 'Open'} ${label}, ${count} ${count === 1 ? 'item' : 'items'}`}
+              onClick={() => { if (href) window.open(href, '_blank', 'noopener,noreferrer'); else setOpen(!open); }}
             />
             <div className="gf-label">
               <span className="gf-title">{label}</span>

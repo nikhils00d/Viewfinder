@@ -17,8 +17,7 @@ function clamp01(v) { return Math.max(0, Math.min(1, v)); }
 function easeOut(t) { return 1 - Math.pow(1 - t, 2.4); }
 
 // ── Scroll range over which the full transition happens ─────────────────────
-const SCROLL_START = 0;     // px — navbar is fully expanded
-const SCROLL_END   = 260;   // px — navbar is fully compact
+const SHRINK_DISTANCE = 260;
 
 // ── Expanded ↔ compact design tokens (interpolated by scrollProgress) ───────
 const EXPANDED = {
@@ -47,7 +46,7 @@ const COMPACT = {
   shadowAlpha:    0.50,
 };
 
-export default function GlassNavbar() {
+export default function GlassNavbar({ scrollStartRef }) {
   const [progress, setProgress]       = useState(0);  // 0 = expanded, 1 = compact
   const [mobileOpen, setMobileOpen]   = useState(false);
   const [activeHref, setActiveHref]   = useState('/');
@@ -71,10 +70,17 @@ export default function GlassNavbar() {
   // ── continuous scroll → progress ─────────────────────────────────────────
   useEffect(() => {
     const onScroll = () => {
-      const raw = clamp01((window.scrollY - SCROLL_START) / (SCROLL_END - SCROLL_START));
+      // The landing hero stays pinned while the photo comes into focus.
+      // Begin shrinking only once that sticky section starts leaving the viewport.
+      const hero = scrollStartRef?.current;
+      const start = hero ? Math.max(0, hero.getBoundingClientRect().bottom + window.scrollY - window.innerHeight) : 0;
+      const raw = clamp01((window.scrollY - start) / SHRINK_DISTANCE);
       rawRef.current = easeOut(raw);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    const observer = scrollStartRef?.current && new ResizeObserver(onScroll);
+    if (observer) observer.observe(scrollStartRef.current);
     onScroll();
 
     // RAF loop: smoothly chase rawRef.current
@@ -95,9 +101,11 @@ export default function GlassNavbar() {
 
     return () => {
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      observer?.disconnect();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, []);
+  }, [scrollStartRef]);
 
   // ── active route sync ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -114,6 +122,13 @@ export default function GlassNavbar() {
     return () => document.removeEventListener('mousedown', h);
   }, [mobileOpen]);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const close = e => { if (e.key === 'Escape') { setMobileOpen(false); mobileRef.current?.querySelector('.gnav-hamburger')?.focus(); } };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [mobileOpen]);
+
   // ── resize closes mobile menu ─────────────────────────────────────────────
   useEffect(() => {
     const h = () => { if (window.innerWidth >= 768) setMobileOpen(false); };
@@ -126,26 +141,9 @@ export default function GlassNavbar() {
     e.preventDefault();
     setMobileOpen(false);
 
-    if (item.type === 'anchor') {
-      const [path, hash] = item.href.split('#');
-      if (!path || location.pathname === path || location.pathname === '/') {
-        document.getElementById(hash)?.scrollIntoView({
-          behavior: reducedMotion ? 'auto' : 'smooth',
-        });
-      } else {
-        navigate(path || '/');
-        setTimeout(() => {
-          document.getElementById(hash)?.scrollIntoView({
-            behavior: reducedMotion ? 'auto' : 'smooth',
-          });
-        }, 120);
-      }
-      setActiveHref(item.href);
-    } else {
-      navigate(item.href);
-      window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
-      setActiveHref(item.href);
-    }
+    navigate(item.href);
+    if (item.href === '/' && location.pathname === '/') window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+    setActiveHref(item.href);
   }, [navigate, location.pathname, reducedMotion]);
 
   // ── interpolated style values ─────────────────────────────────────────────
@@ -217,6 +215,7 @@ export default function GlassNavbar() {
           justify-content: space-between;
           gap: 0;
         }
+        .gnav-mobile-brand { display: none; font: 10px 'DM Mono', monospace; letter-spacing: .12em; color: rgba(255,255,255,.7); }
 
         .gnav-link {
           font-family: 'DM Mono', monospace;
@@ -301,7 +300,7 @@ export default function GlassNavbar() {
         /* ── mobile panel ── */
         .gnav-mobile-menu {
           position: fixed;
-          top: 0;
+          top: 82px;
           left: 50%;
           transform: translateX(-50%) translateY(-6px);
           width: min(340px, calc(100vw - 32px));
@@ -311,7 +310,9 @@ export default function GlassNavbar() {
           border: 1px solid rgba(255,255,255,0.09);
           border-radius: 22px;
           box-shadow: 0 16px 60px rgba(0,0,0,0.55), 0 2px 0 rgba(255,255,255,0.06) inset;
-          padding: 70px 0 14px;
+          padding: 12px 0;
+          max-height: calc(100dvh - 98px);
+          overflow-y: auto;
           z-index: 9998;
           pointer-events: none;
           transition: opacity 230ms ease, transform 230ms ease;
@@ -362,6 +363,7 @@ export default function GlassNavbar() {
         }
 
         @media (max-width: 767px) {
+          .gnav-mobile-brand { display: block; }
           .gnav-links     { display: none; }
           .gnav-hamburger { display: flex; }
           .gnav-pill      { padding: 8px 16px !important; }
@@ -376,13 +378,13 @@ export default function GlassNavbar() {
 
       <nav className="gnav-root" aria-label="Main navigation" ref={mobileRef}>
         <div className="gnav-pill" style={pillStyle}>
+          <a className="gnav-mobile-brand" href="/" onClick={e => handleNav(e, NAV_ITEMS[0])}>VIEWFINDER</a>
 
           {/* Desktop links */}
           <ul className="gnav-links" role="list">
             {NAV_ITEMS.map((item) => {
               const isActive =
-                activeHref === item.href ||
-                (item.href === '/' && location.pathname === '/' && !location.hash);
+                activeHref === item.href;
 
               return (
                 <li key={item.label}>

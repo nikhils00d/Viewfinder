@@ -1,4 +1,7 @@
-import React, { memo, useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import SafeImage from './SafeImage';
+import usePhotoDialog from '../usePhotoDialog';
+import React, { memo, useCallback, useState, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   AnimatePresence,
   motion,
@@ -111,12 +114,16 @@ const Carousel = memo(({ handleClick, cards, smoothRotation, smoothHoverLean }) 
                 transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
                 transformStyle: 'preserve-3d',
               }}
+              role="button"
+              tabIndex={0}
+              aria-label={`Inspect ${card.title}`}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(card, i); } }}
               onClick={() => handleClick(card, i)}
             >
               <div
                 className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-neutral-900 border border-white/10 shadow-[0_15px_35px_rgba(0,0,0,0.65)] transition-all duration-300 group-hover:border-white/50 group-hover:shadow-[0_20px_45px_rgba(232,32,42,0.3)] group-hover:scale-[1.04]"
               >
-                <img
+                <SafeImage
                   src={card.url}
                   alt={card.title}
                   draggable={false}
@@ -151,6 +158,8 @@ const Carousel = memo(({ handleClick, cards, smoothRotation, smoothHoverLean }) 
 export default function PhotoCarousel({ cards = DEFAULT_CARDS }) {
   const [activeCard, setActiveCard] = useState(null);
   const stageRef = useRef(null);
+  const handleClose = useCallback(() => setActiveCard(null), []);
+  const dialogRef = usePhotoDialog(activeCard, handleClose);
 
   // Motion values for smooth mouse-wheel rotation & hover perspective lean
   const rawRotation = useMotionValue(0);
@@ -209,21 +218,18 @@ export default function PhotoCarousel({ cards = DEFAULT_CARDS }) {
     setActiveCard(card);
   };
 
-  const handleClose = () => {
-    setActiveCard(null);
-  };
 
   return (
     <div className="relative w-full overflow-hidden select-none py-4">
       {/* Lightbox Modal */}
-      <AnimatePresence>
+      {createPortal(<AnimatePresence>
         {activeCard && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+            className="photo-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
           >
             <motion.div
               initial={{ scale: 0.85, opacity: 0 }}
@@ -231,17 +237,19 @@ export default function PhotoCarousel({ cards = DEFAULT_CARDS }) {
               exit={{ scale: 0.85, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative max-w-lg w-full bg-[#141416] border border-white/15 rounded-2xl overflow-hidden shadow-2xl"
+              ref={dialogRef}
+              role="dialog" aria-modal="true" aria-label={activeCard.title}
+              className="photo-dialog-card relative max-w-lg w-full bg-[#141416] border border-white/15 rounded-2xl overflow-hidden shadow-2xl"
             >
-              <div className="relative aspect-[4/5] w-full overflow-hidden bg-black">
-                <img
+              <div className="photo-dialog-image relative aspect-[4/5] w-full overflow-hidden bg-black">
+                <SafeImage
                   src={activeCard.url}
                   alt={activeCard.title}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="p-5 flex items-center justify-between border-t border-white/10">
-                <div>
+              <div className="photo-dialog-footer flex items-center justify-between border-t border-white/10">
+                <div className="photo-dialog-copy">
                   <div
                     className="text-[10px] tracking-[0.18em] uppercase text-[#E8202A] font-mono"
                     style={{ fontFamily: '"DM Mono", monospace' }}
@@ -258,7 +266,7 @@ export default function PhotoCarousel({ cards = DEFAULT_CARDS }) {
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-3.5 py-1.5 rounded-lg border border-white/20 bg-white/5 text-white/80 hover:text-white hover:bg-white/10 text-xs font-mono tracking-wider transition-colors"
+                  className="photo-dialog-close rounded-lg border border-white/20 bg-white/5 text-white/80 hover:text-white hover:bg-white/10 text-xs font-mono tracking-wider transition-colors"
                   style={{ fontFamily: '"DM Mono", monospace' }}
                 >
                   CLOSE [ESC]
@@ -267,10 +275,12 @@ export default function PhotoCarousel({ cards = DEFAULT_CARDS }) {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
 
       {/* 3D Carousel Stage with Wheel & Hover Listeners */}
-      <div
+      <motion.div
+        onPan={(e, info) => { if (!activeCard) rawRotation.set(rawRotation.get() + info.delta.x * 0.3); }}
+        style={{ touchAction: 'pan-y' }}
         ref={stageRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -282,7 +292,7 @@ export default function PhotoCarousel({ cards = DEFAULT_CARDS }) {
           smoothRotation={smoothRotation}
           smoothHoverLean={smoothHoverLean}
         />
-      </div>
+      </motion.div>
 
       {/* HUD Instruction Cue */}
       <div
